@@ -1,0 +1,11 @@
+{
+	"Id": "DM1UReRailRequirement",
+	"Version": "1.00.0",
+	"DisplayName": "DM1UReRailRequirement",
+	"AssemblyName": "DM1UReRailRequirement.dll",
+	"Author": "CJ187",
+	"Credits": "Coookie, NotAnOption and ChatGPT",
+	"EntryMethod": "DM1UReRailRequirement.Main.Load",
+	"ManagerVersion": "0.27.2",
+	"HomePage": "https://www.nexusmods.com/derailvalley/mods/1201"
+}
