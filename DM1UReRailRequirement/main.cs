@@ -1,8 +1,10 @@
 using HarmonyLib;
 using UnityModManagerNet;
 using UnityEngine;
-using System.Collections;
+using System.Linq;
 using DV;
+using DV.CabControls;
+using DV.InventorySystem;
 
 namespace DM1UReRailRequirement
 {
@@ -16,87 +18,61 @@ namespace DM1UReRailRequirement
             harmony.PatchAll();
 
             modEntry.OnUnload = Unload;
-
-            CoroutineRunner.Start(PeriodicCheck());
+            Debug.Log("[DM1UReRailRequirement] Mod loaded (using ItemBase.Grabbed event)");
             return true;
         }
 
         static bool Unload(UnityModManager.ModEntry modEntry)
         {
             harmony?.UnpatchAll(modEntry.Info.Id);
-            CoroutineRunner.Stop();
+            Debug.Log("[DM1UReRailRequirement] Mod unloaded");
             return true;
         }
 
-        private static IEnumerator PeriodicCheck()
+        internal static void OnRadioGrabbed(CommsRadioController radio)
         {
-            while (true)
+            if (PlayerManager.PlayerTransform == null || CarSpawner.Instance == null)
             {
-                if (CarSpawner.Instance == null || PlayerManager.PlayerTransform == null)
-                {
-                    yield return new WaitForSeconds(10f);
-                    continue;
-                }
+                Debug.LogWarning("[DM1UReRailRequirement] Player or CarSpawner not ready.");
+                return;
+            }
 
-                var radio = GameObject.FindObjectOfType<CommsRadioController>();
-                if (radio != null)
-                {
-                    Vector3 playerPos = PlayerManager.PlayerTransform.position;
-                    bool dm1uNearby = false;
+            Vector3 playerPos = PlayerManager.PlayerTransform.position;
 
-                    foreach (TrainCar car in CarSpawner.Instance.AllCars)
-                    {
-                        if (car != null && car.name != null && car.name.Contains("LocoDM1U"))
-                        {
-                            float dist = Vector3.Distance(car.transform.position, playerPos);
-                            if (dist <= 250f)
-                            {
-                                dm1uNearby = true;
-                                break;
-                            }
-                        }
-                    }
+            bool dm1uNearby = CarSpawner.Instance.AllCars
+                .Any(car => car != null &&
+                            car.name != null &&
+                            car.name.Contains("LocoDM1U") &&
+                            (car.transform.position - playerPos).sqrMagnitude <= 2500f);
 
-                    if (dm1uNearby)
-                    {
-                        radio.ActivateMode<RerailController>();
-                        Debug.Log("[DM1UReRailRequirement] DM1U in range – Rerail enabled");
-                    }
-                    else
-                    {
-                        radio.DeactivateMode<RerailController>();
-                        Debug.Log("[DM1UReRailRequirement] No DM1U within 250m – Rerail disabled");
-                    }
-                }
-
-                yield return new WaitForSeconds(10f);
+            if (dm1uNearby)
+            {
+                radio.ActivateMode<RerailController>();
+                Debug.Log("[DM1UReRailRequirement] DM1U in range – Rerail enabled");
+            }
+            else
+            {
+                radio.DeactivateMode<RerailController>();
+                Debug.Log("[DM1UReRailRequirement] No DM1U nearby – Rerail disabled");
             }
         }
     }
 
-    public class CoroutineRunner : MonoBehaviour
+    [HarmonyPatch(typeof(CommsRadioController), "Start")]
+    static class Patch_CommsRadio_Start
     {
-        private static CoroutineRunner? instance;
-
-        public static void Start(IEnumerator routine)
+        static void Postfix(CommsRadioController __instance)
         {
-            if (instance == null)
+            var itemBase = __instance.GetComponent<ItemBase>();
+            if (itemBase == null)
             {
-                GameObject go = new GameObject("DM1UReRailRequirement_CoroutineRunner");
-                UnityEngine.Object.DontDestroyOnLoad(go);
-                instance = go.AddComponent<CoroutineRunner>();
+                Debug.LogWarning("[DM1UReRailRequirement] ItemBase missing on CommsRadio!");
+                return;
             }
 
-            instance.StartCoroutine(routine);
-        }
-
-        public static void Stop()
-        {
-            if (instance != null)
-            {
-                UnityEngine.Object.Destroy(instance.gameObject);
-                instance = null;
-            }
+            // Einmal registrieren, ohne Mehrfachbindung
+            itemBase.Grabbed += _ => Main.OnRadioGrabbed(__instance);
+            Debug.Log("[DM1UReRailRequirement] Grab-Event registered via ItemBase");
         }
     }
 }
