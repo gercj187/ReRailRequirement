@@ -24,6 +24,9 @@
 		<Reference Include="UnityEngine.IMGUIModule">
 			<HintPath>C:\GAMES\Steam\steamapps\common\Derail Valley\DerailValley_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
 		</Reference>
+		<Reference Include="Unity.TextMeshPro">
+			<HintPath>C:\GAMES\Steam\steamapps\common\Derail Valley\DerailValley_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 	<!-- Unity -->
