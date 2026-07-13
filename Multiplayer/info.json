@@ -8,7 +8,7 @@
 	"EntryMethod": "ReRailRequirement.Main.Load",
 	"ManagerVersion": "0.27.2",
 	"HomePage": "https://www.nexusmods.com/derailvalley/mods/1201",
-	"Repository": "https://raw.githubusercontent.com/gercj187/ReRailRequirement/refs/heads/main/Singleplayer/repository.json",
+	"Repository": "https://raw.githubusercontent.com/gercj187/ReRailRequirement/refs/heads/main/Multiplayer/repository.json",
 	"LoadAfter": [
 		"Multiplayer"
 	],
